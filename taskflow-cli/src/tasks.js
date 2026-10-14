@@ -41,8 +41,21 @@ function writeTasks(tasks) {
 
 function addTask(name) {
   const tasks = readTasks();
-  const task = { id: randomUUID(), name };
+  const task = { id: randomUUID(), name, completed: false };
   tasks.push(task);
+  writeTasks(tasks);
+  return task;
+}
+
+function completeTask(id) {
+  const tasks = readTasks();
+  const task = tasks.find((item) => item.id === id);
+
+  if (!task) {
+    throw new Error(`Task not found: ${id}`);
+  }
+
+  task.completed = true;
   writeTasks(tasks);
   return task;
 }
@@ -51,4 +64,4 @@ function listTasks() {
   return readTasks();
 }
 
-module.exports = { addTask, listTasks };
+module.exports = { addTask, completeTask, listTasks };

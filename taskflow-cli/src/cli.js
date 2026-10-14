@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
-const { addTask, listTasks } = require('./tasks');
+const { addTask, completeTask, listTasks } = require('./tasks');
 
 const HELP = `TaskFlow - a simple task list
 
 Usage:
   taskflow add "Task name"
   taskflow list
+  taskflow complete <id>
   taskflow --help`;
 
 function run(args) {
@@ -28,6 +29,17 @@ function run(args) {
     return;
   }
 
+  if (command === 'complete') {
+    const id = rest[0]?.trim();
+    if (rest.length !== 1 || !id) {
+      throw new Error('Please provide one task ID. Usage: taskflow complete <id>');
+    }
+
+    const task = completeTask(id);
+    console.log(`Completed task: ${task.name}`);
+    return;
+  }
+
   if (command === 'list' && rest.length === 0) {
     const tasks = listTasks();
     if (tasks.length === 0) {
@@ -36,7 +48,8 @@ function run(args) {
     }
 
     for (const [index, task] of tasks.entries()) {
-      console.log(`${index + 1}. ${task.name}`);
+      const status = task.completed === true ? '[x]' : '[ ]';
+      console.log(`${index + 1}. ${status} ${task.name}`);
     }
     return;
   }

@@ -33,6 +33,7 @@ test('adds a task with its name and identifier', (t) => {
   assert.match(result.stdout, /Added task: Prepare project report/);
   const [task] = JSON.parse(fs.readFileSync(tasksFile, 'utf8'));
   assert.equal(task.name, 'Prepare project report');
+  assert.equal(task.completed, false);
   assert.equal(typeof task.id, 'string');
   assert.ok(task.id.length > 0);
 });
@@ -45,8 +46,8 @@ test('lists previously added tasks', (t) => {
   const result = runCli('list');
 
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /1\. First task/);
-  assert.match(result.stdout, /2\. Second task/);
+  assert.match(result.stdout, /1\. \[ \] First task/);
+  assert.match(result.stdout, /2\. \[ \] Second task/);
 });
 
 test('rejects an empty task name without writing data', (t) => {
@@ -68,5 +69,47 @@ test('persists tasks between separate CLI invocations', (t) => {
 
   const listed = runCli('list');
   assert.equal(listed.status, 0, listed.stderr);
-  assert.match(listed.stdout, /1\. Saved task/);
+  assert.match(listed.stdout, /1\. \[ \] Saved task/);
+});
+
+test('completes a task and displays the checked marker', (t) => {
+  const { runCli, tasksFile } = createIsolatedProject(t);
+  const added = runCli('add', 'Finished task');
+  assert.equal(added.status, 0, added.stderr);
+  const [task] = JSON.parse(fs.readFileSync(tasksFile, 'utf8'));
+
+  const completed = runCli('complete', task.id);
+  assert.equal(completed.status, 0, completed.stderr);
+  assert.match(completed.stdout, /Completed task: Finished task/);
+  assert.equal(JSON.parse(fs.readFileSync(tasksFile, 'utf8'))[0].completed, true);
+
+  const listed = runCli('list');
+  assert.equal(listed.status, 0, listed.stderr);
+  assert.match(listed.stdout, /1\. \[x\] Finished task/);
+});
+
+test('treats legacy tasks without a completed field as incomplete', (t) => {
+  const { runCli, tasksFile } = createIsolatedProject(t);
+  fs.writeFileSync(tasksFile, JSON.stringify([{ id: 'legacy-id', name: 'Legacy task' }]));
+
+  const listed = runCli('list');
+
+  assert.equal(listed.status, 0, listed.stderr);
+  assert.match(listed.stdout, /1\. \[ \] Legacy task/);
+  assert.equal('completed' in JSON.parse(fs.readFileSync(tasksFile, 'utf8'))[0], false);
+});
+
+test('rejects completion without an ID or with an unknown ID', (t) => {
+  const { runCli, tasksFile } = createIsolatedProject(t);
+  runCli('add', 'Unchanged task');
+  const originalTasks = JSON.parse(fs.readFileSync(tasksFile, 'utf8'));
+
+  const missingId = runCli('complete');
+  assert.notEqual(missingId.status, 0);
+  assert.match(missingId.stderr, /provide one task ID/i);
+
+  const unknownId = runCli('complete', 'missing-id');
+  assert.notEqual(unknownId.status, 0);
+  assert.match(unknownId.stderr, /Task not found: missing-id/);
+  assert.deepEqual(JSON.parse(fs.readFileSync(tasksFile, 'utf8')), originalTasks);
 });
