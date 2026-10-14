@@ -1,1 +1,6 @@
 taskflow-cli/tasks.json
+
+# Node.js dependencies and generated files
+node_modules/
+coverage/
+npm-debug.log*
