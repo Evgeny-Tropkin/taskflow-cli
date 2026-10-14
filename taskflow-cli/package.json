@@ -2,6 +2,9 @@
   "name": "taskflow-cli",
   "version": "1.0.0",
   "description": "A small command-line task manager",
+  "scripts": {
+    "test": "node --test"
+  },
   "main": "src/tasks.js",
   "bin": {
     "taskflow": "src/cli.js"

@@ -25,3 +25,13 @@ The supported commands are:
 The task data is stored in `tasks.json` in the project directory, regardless of the directory from which the command is run. Each task has an ID and a name. Invalid commands, empty task names, or unreadable/invalid task data are reported as errors and return a nonzero exit code.
 
 To expose the `taskflow` command through npm's local executable link, run `npm link` from this directory, then use `taskflow add "Task name"` or `taskflow list`. No package installation is needed to run the examples above.
+
+## Tests
+
+Run the automated tests with Node.js's built-in test runner:
+
+```sh
+npm test
+```
+
+The tests create isolated temporary project copies, so they do not modify this project's `tasks.json`.
